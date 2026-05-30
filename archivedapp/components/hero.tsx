@@ -12,9 +12,21 @@ const slides = [
 
 export default function Hero() {
     const [current, setCurrent] = useState(0);
+    const [loaded, setLoaded] = useState<boolean[]>(slides.map(() => false));
     const trackRef = useRef<HTMLDivElement | null>(null);
     const scrollArrowRef = useRef<HTMLButtonElement | null>(null);
+    const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
+    // Mark a video as loaded
+    const handleCanPlay = (i: number) => {
+        setLoaded((prev) => {
+            const next = [...prev];
+            next[i] = true;
+            return next;
+        });
+    };
+
+    // Auto-advance slides
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrent((prev) => (prev + 1) % slides.length);
@@ -22,9 +34,23 @@ export default function Hero() {
         return () => clearInterval(interval);
     }, []);
 
+    // Play the current video, pause others
+    useEffect(() => {
+        videoRefs.current.forEach((vid, i) => {
+            if (!vid) return;
+            if (i === current) {
+                // Reset to beginning and play
+                vid.currentTime = 0;
+                vid.play().catch(() => {});
+            } else {
+                vid.pause();
+            }
+        });
+    }, [current]);
+
+    // Slide transition
     useGSAP(() => {
         if (!trackRef.current) return;
-
         gsap.to(trackRef.current, {
             xPercent: -current * 100,
             duration: 1,
@@ -32,10 +58,9 @@ export default function Hero() {
         });
     }, [current]);
 
-    // Floating bounce animation on scroll arrow
+    // Scroll arrow bounce
     useGSAP(() => {
         if (!scrollArrowRef.current) return;
-
         gsap.to(scrollArrowRef.current, {
             y: 8,
             duration: 1.2,
@@ -47,9 +72,7 @@ export default function Hero() {
 
     const scrollToAbout = () => {
         const about = document.getElementById("about");
-        if (about) {
-            about.scrollIntoView({ behavior: "smooth" });
-        }
+        if (about) about.scrollIntoView({ behavior: "smooth" });
     };
 
     return (
@@ -58,15 +81,33 @@ export default function Hero() {
             {/* Video track */}
             <div ref={trackRef} className="flex w-full h-full">
                 {slides.map((src, i) => (
-                    <video
-                        key={i}
-                        src={src}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        className="w-full h-full object-cover flex-shrink-0"
-                    />
+                    <div key={i} className="relative w-full h-full flex-shrink-0">
+
+                        {/* Low-res blur placeholder shown until video is ready */}
+                        {!loaded[i] && (
+                            <div className="absolute inset-0 bg-black/80 animate-pulse" />
+                        )}
+
+                        <video
+                            ref={(el) => { videoRefs.current[i] = el; }}
+                            src={src}
+                            // Only autoplay the first slide; others are triggered by useEffect
+                            autoPlay={i === 0}
+                            muted
+                            loop
+                            playsInline
+                            // preload="auto" tells the browser to fetch the video immediately
+                            preload="auto"
+                            // poster gives a thumbnail to show before the video loads (optional — add a jpg per video)
+                            // poster={`/hero/poster${i + 1}.jpg`}
+                            onCanPlay={() => handleCanPlay(i)}
+                            className="w-full h-full object-cover"
+                            style={{
+                                opacity: loaded[i] ? 1 : 0,
+                                transition: "opacity 0.4s ease",
+                            }}
+                        />
+                    </div>
                 ))}
             </div>
 
@@ -104,6 +145,7 @@ export default function Hero() {
                             src={src}
                             muted
                             playsInline
+                            preload="metadata"
                             className="md:w-14 md:h-14 w-12 h-12 object-cover"
                         />
                     </div>
