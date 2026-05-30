@@ -13,12 +13,12 @@ const slides = [
 export default function Hero() {
     const [current, setCurrent] = useState(0);
     const trackRef = useRef<HTMLDivElement | null>(null);
+    const scrollArrowRef = useRef<HTMLButtonElement | null>(null);
 
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrent((prev) => (prev + 1) % slides.length);
         }, 10000);
-
         return () => clearInterval(interval);
     }, []);
 
@@ -32,14 +32,31 @@ export default function Hero() {
         });
     }, [current]);
 
+    // Floating bounce animation on scroll arrow
+    useGSAP(() => {
+        if (!scrollArrowRef.current) return;
+
+        gsap.to(scrollArrowRef.current, {
+            y: 8,
+            duration: 1.2,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+        });
+    }, []);
+
+    const scrollToAbout = () => {
+        const about = document.getElementById("about");
+        if (about) {
+            about.scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
     return (
         <div className="relative w-full h-screen overflow-hidden bg-black">
 
             {/* Video track */}
-            <div
-                ref={trackRef}
-                className="flex w-full h-full"
-            >
+            <div ref={trackRef} className="flex w-full h-full">
                 {slides.map((src, i) => (
                     <video
                         key={i}
@@ -53,8 +70,10 @@ export default function Hero() {
                 ))}
             </div>
 
+            {/* Dark gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
 
+            {/* Hero text — centered */}
             <div className="absolute bottom-36 md:bottom-44 left-1/2 -translate-x-1/2 z-10 w-full px-6 flex flex-col items-center text-center">
                 <h1
                     className="hero-headline text-white w-full"
@@ -69,6 +88,7 @@ export default function Hero() {
                 </p>
             </div>
 
+            {/* Thumbnail strip — bottom center */}
             <div className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-3 md:gap-5 z-10">
                 {slides.map((src, i) => (
                     <div
@@ -89,6 +109,35 @@ export default function Hero() {
                     </div>
                 ))}
             </div>
+
+            {/* Scroll down arrow */}
+            <button
+                ref={scrollArrowRef}
+                onClick={scrollToAbout}
+                aria-label="Scroll to about"
+                className="absolute right-6 md:right-14 bottom-10 z-10 flex flex-col items-center gap-2 text-white/50 hover:text-white transition-colors duration-300 cursor-pointer"
+                style={{ fontFamily: "var(--font-barlow), sans-serif" }}
+            >
+                <span className="text-[10px] tracking-[0.25em] uppercase rotate-90 mb-2">
+                    Scroll
+                </span>
+                <svg
+                    width="16"
+                    height="28"
+                    viewBox="0 0 16 28"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <rect x="7" y="0" width="2" height="20" rx="1" fill="currentColor" opacity="0.4" />
+                    <path
+                        d="M1 18L8 26L15 18"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+            </button>
 
         </div>
     );
