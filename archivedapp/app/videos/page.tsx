@@ -201,17 +201,20 @@ function FeaturedBanner() {
             y: 60,
         });
 
+        const content = contentRef.current;
+        if (!content) return;
+
         const tl = gsap.timeline({ delay: 0.3 });
-        tl.from(contentRef.current?.querySelector(".feat-tag"), {
+        tl.from(content.querySelector(".feat-tag"), {
             y: 20, opacity: 0, duration: 0.8, ease: "expo.out",
         })
-            .from(contentRef.current?.querySelector(".feat-title"), {
+            .from(content.querySelector(".feat-title"), {
                 y: 40, opacity: 0, duration: 1, ease: "expo.out",
             }, "-=0.5")
-            .from(contentRef.current?.querySelector(".feat-meta"), {
+            .from(content.querySelector(".feat-meta"), {
                 y: 20, opacity: 0, duration: 0.8, ease: "expo.out",
             }, "-=0.6")
-            .from(contentRef.current?.querySelectorAll(".feat-btn"), {
+            .from(content.querySelectorAll(".feat-btn"), {
                 y: 20, opacity: 0, duration: 0.7, ease: "expo.out", stagger: 0.1,
             }, "-=0.5");
     }, []);
